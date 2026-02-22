@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Entrar - Luvano</title>
+  <link rel="manifest" href="manifest.json"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{--azul:#1877f2;--azul-dark:#0d5ec9;--azul-light:#e7f0ff;--bg:#f0f2f5;--borda:#dde1e7;--texto:#1c1e21;--texto2:#65676b;--vermelho:#e41e3f;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;}
+    .page{flex:1;display:flex;min-height:100vh;}
+    /* Lado esquerdo (desktop) */
+    .left{background:linear-gradient(135deg,#1877f2,#0d5ec9 60%,#1a3a8a);display:flex;align-items:center;justify-content:center;flex-direction:column;padding:48px 40px;text-align:center;flex:1;color:#fff;}
+    .left-logo{font-size:72px;margin-bottom:16px;}
+    .left-title{font-size:36px;font-weight:900;letter-spacing:-1px;margin-bottom:8px;}
+    .left-sub{font-size:17px;opacity:.85;line-height:1.6;max-width:300px;}
+    .left-feats{margin-top:32px;display:flex;flex-direction:column;gap:10px;text-align:left;}
+    .lf{display:flex;align-items:center;gap:10px;font-size:15px;opacity:.9;}
+    /* Lado direito (formulário) */
+    .right{display:flex;align-items:center;justify-content:center;padding:32px 24px;flex:1;max-width:480px;}
+    @media(max-width:700px){.left{display:none;}.right{max-width:none;width:100%;}}
+    .card{background:#fff;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,.12);width:100%;max-width:400px;padding:36px;}
+    .card-logo{text-align:center;margin-bottom:24px;}
+    .card-logo a{font-size:28px;font-weight:900;color:var(--azul);text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;}
+    .card-logo span{font-size:32px;}
+    h1{font-size:24px;font-weight:800;margin-bottom:5px;}
+    .sub{color:var(--texto2);font-size:14px;margin-bottom:24px;}
+    .fg{margin-bottom:16px;}
+    label{display:block;font-size:13px;font-weight:600;margin-bottom:5px;}
+    input{width:100%;padding:12px 14px;border:2px solid var(--borda);border-radius:10px;font-size:15px;outline:none;transition:border-color .2s;}
+    input:focus{border-color:var(--azul);}
+    input.err{border-color:var(--vermelho);}
+    .pw-wrap{position:relative;}
+    .pw-wrap input{padding-right:46px;}
+    .pw-eye{position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:19px;color:var(--texto2);}
+    .btn-p{width:100%;background:var(--azul);color:#fff;border:none;border-radius:10px;padding:13px;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s;margin-bottom:10px;}
+    .btn-p:hover{background:var(--azul-dark);}
+    .btn-p:disabled{background:#9fb8e8;cursor:not-allowed;}
+    .btn-g{width:100%;background:#fff;color:var(--texto);border:2px solid var(--borda);border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;}
+    .btn-g:hover{border-color:var(--azul);background:var(--azul-light);}
+    .divider{display:flex;align-items:center;gap:10px;margin:16px 0;}
+    .divider hr{flex:1;border:none;border-top:1px solid var(--borda);}
+    .divider span{color:var(--texto2);font-size:13px;}
+    .forgot{text-align:right;margin-top:-8px;margin-bottom:14px;}
+    .forgot a{color:var(--azul);font-size:13px;text-decoration:none;}
+    .link-reg{text-align:center;margin-top:18px;font-size:14px;color:var(--texto2);}
+    .link-reg a{color:var(--azul);font-weight:600;text-decoration:none;}
+    .spin{width:20px;height:20px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .err-msg{background:#ffebee;color:var(--vermelho);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none;}
+    #toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);padding:11px 22px;border-radius:30px;font-size:14px;font-weight:600;z-index:9999;transition:transform .3s;color:#fff;max-width:90vw;text-align:center;}
+    #toast.on{transform:translateX(-50%) translateY(0);}
+    /* MODAL RESET SENHA */
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:998;display:none;align-items:center;justify-content:center;padding:16px;}
+    .modal-bg.on{display:flex;}
+    .modal{background:#fff;border-radius:12px;padding:26px;width:100%;max-width:360px;}
+    .modal h3{font-size:18px;font-weight:700;margin-bottom:8px;}
+    .modal p{color:var(--texto2);font-size:14px;margin-bottom:14px;}
+    .modal input{width:100%;padding:11px 13px;border:2px solid var(--borda);border-radius:9px;font-size:15px;outline:none;margin-bottom:12px;}
+    .modal input:focus{border-color:var(--azul);}
+    .modal-btns{display:flex;gap:8px;}
+    .modal-btns button{flex:1;padding:11px;border-radius:8px;font-weight:700;cursor:pointer;border:none;font-size:14px;}
+    .mb-c{background:var(--bg);color:var(--texto);}
+    .mb-ok{background:var(--azul);color:#fff;}
+  </style>
+</head>
+<body>
+<div class="page">
+  <!-- LADO ESQUERDO (hero desktop) -->
+  <div class="left">
+    <div class="left-logo">🛍️</div>
+    <div class="left-title">Luvano</div>
+    <div class="left-sub">O maior marketplace de Moçambique. Compre e venda com facilidade.</div>
+    <div class="left-feats">
+      <div class="lf">✅ Pagamento com M-Pesa, E-Mola e mKesh</div>
+      <div class="lf">✅ Mais de 10.000 produtos disponíveis</div>
+      <div class="lf">✅ Compra segura e garantida</div>
+      <div class="lf">✅ Chat direto com vendedores</div>
+    </div>
+  </div>
+
+  <!-- FORMULÁRIO -->
+  <div class="right">
+    <div class="card">
+      <div class="card-logo">
+        <a href="index.html"><span>🛍️</span> Luvano</a>
+      </div>
+      <h1>Bem-vindo de volta!</h1>
+      <div class="sub">Entre na sua conta Luvano</div>
+
+      <div class="err-msg" id="errMsg"></div>
+
+      <div class="fg">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="seu@email.com" autocomplete="email"/>
+      </div>
+      <div class="fg">
+        <label>Senha</label>
+        <div class="pw-wrap">
+          <input type="password" id="senha" placeholder="A sua senha" autocomplete="current-password" id="senha"/>
+          <button class="pw-eye" type="button" onclick="togglePw('senha',this)">👁️</button>
+        </div>
+      </div>
+      <div class="forgot"><a href="#" onclick="abrirReset(event)">Esqueceu a senha?</a></div>
+
+      <button class="btn-p" id="btnLogin" onclick="login()">
+        Entrar <div class="spin" id="spin"></div>
+      </button>
+
+      <div class="divider"><hr/><span>ou</span><hr/></div>
+
+      <button class="btn-g" onclick="loginGoogle()">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.6 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.6 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.6 16 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.6 29.3 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.6-3.2-11.3-7.8l-6.6 5.1C9.8 39.7 16.4 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.2 5.6l6.2 5.2C37 38.2 44 33 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+        Continuar com Google
+      </button>
+
+      <div class="link-reg">Não tem conta? <a href="cadastro.html">Criar conta grátis</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RESET SENHA -->
+<div class="modal-bg" id="modalReset">
+  <div class="modal">
+    <h3>🔑 Recuperar Senha</h3>
+    <p>Insira o seu email e enviaremos um link para redefinir a senha.</p>
+    <input type="email" id="resetEmail" placeholder="seu@email.com"/>
+    <div class="modal-btns">
+      <button class="mb-c" onclick="document.getElementById('modalReset').classList.remove('on')">Cancelar</button>
+      <button class="mb-ok" onclick="enviarReset()">Enviar Link</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script>
+const SB_URL='https://SEU_PROJETO.supabase.co';
+const SB_KEY='SUA_ANON_KEY_AQUI';
+const {createClient}=supabase;
+const sb=createClient(SB_URL,SB_KEY);
+const params=new URLSearchParams(window.location.search);
+const nextPage=params.get('next')||'index.html';
+
+document.addEventListener('DOMContentLoaded',async()=>{
+  const {data:{session}}=await sb.auth.getSession();
+  if(session)window.location.href=nextPage;
+});
+
+// Login com enter
+document.addEventListener('keydown',e=>{if(e.key==='Enter')login();});
+
+async function login(){
+  const email=document.getElementById('email').value.trim();
+  const senha=document.getElementById('senha').value;
+  const errEl=document.getElementById('errMsg');
+  errEl.style.display='none';
+
+  if(!email||!senha){setErr('Preencha todos os campos.');return;}
+  if(!/\S+@\S+\.\S+/.test(email)){setErr('Email inválido.');return;}
+
+  setBusy(true);
+  const {data,error}=await sb.auth.signInWithPassword({email,password:senha});
+  setBusy(false);
+
+  if(error){
+    const msgs={
+      'Invalid login credentials':'Email ou senha incorrectos. Tente novamente.',
+      'Email not confirmed':'Por favor confirme o seu email antes de entrar.',
+      'Too many requests':'Demasiadas tentativas. Aguarde alguns minutos.',
+    };
+    setErr(msgs[error.message]||('Erro: '+error.message));
+    return;
+  }
+
+  // Sucesso
+  showToast('Bem-vindo de volta! 👋','sucesso');
+  setTimeout(()=>window.location.href=nextPage,900);
+}
+
+async function loginGoogle(){
+  const {error}=await sb.auth.signInWithOAuth({
+    provider:'google',
+    options:{redirectTo:window.location.origin+'/'+nextPage}
+  });
+  if(error)setErr('Erro ao conectar com Google: '+error.message);
+}
+
+function abrirReset(e){e.preventDefault();document.getElementById('modalReset').classList.add('on');}
+
+async function enviarReset(){
+  const email=document.getElementById('resetEmail').value.trim();
+  if(!email){showToast('Insira o seu email','erro');return;}
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+'/editar-perfil.html'});
+  document.getElementById('modalReset').classList.remove('on');
+  if(error)showToast('Erro ao enviar: '+error.message,'erro');
+  else showToast('Link enviado para '+email+' ✉️','sucesso');
+}
+
+function togglePw(id,btn){
+  const inp=document.getElementById(id);
+  inp.type=inp.type==='password'?'text':'password';
+  btn.textContent=inp.type==='password'?'👁️':'🙈';
+}
+
+function setBusy(v){
+  document.getElementById('btnLogin').disabled=v;
+  document.getElementById('spin').style.display=v?'block':'none';
+}
+
+function setErr(msg){const el=document.getElementById('errMsg');el.textContent=msg;el.style.display='block';}
+
+let toastT;
+function showToast(msg,t='info'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.style.background=t==='erro'?'#c62828':t==='sucesso'?'#2e7d32':'#323232';
+  el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),4000);
+}
+</script>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/service-worker.js");</script>
+</body>
+</html>

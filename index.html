@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Luvano - Marketplace de Moçambique</title>
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="theme-color" content="#1877f2"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛍️</text></svg>"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{--azul:#1877f2;--azul-dark:#0d5ec9;--azul-light:#e7f0ff;--verde:#25D366;--bg:#f0f2f5;--branco:#fff;--borda:#dde1e7;--texto:#1c1e21;--texto2:#65676b;--vermelho:#e41e3f;--amarelo:#f4af00;--r:12px;--shadow:0 2px 8px rgba(0,0,0,.10);}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--texto);}
+    /* HEADER */
+    header{background:var(--azul);position:sticky;top:0;z-index:200;box-shadow:0 2px 10px rgba(24,119,242,.4);}
+    .h-wrap{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:0 16px;height:56px;}
+    .logo{font-size:21px;font-weight:800;color:#fff;text-decoration:none;display:flex;align-items:center;gap:6px;flex-shrink:0;}
+    .logo em{font-style:normal;font-size:24px;}
+    .srch{flex:1;max-width:520px;display:flex;align-items:center;background:rgba(255,255,255,.18);border-radius:30px;padding:0 14px;gap:8px;}
+    .srch input{flex:1;background:none;border:none;outline:none;color:#fff;font-size:14px;padding:9px 0;}
+    .srch input::placeholder{color:rgba(255,255,255,.7);}
+    .h-btns{display:flex;gap:6px;align-items:center;margin-left:auto;flex-shrink:0;}
+    .btn-h{background:rgba(255,255,255,.18);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;text-decoration:none;white-space:nowrap;}
+    .btn-h:hover{background:rgba(255,255,255,.28);}
+    .btn-pub{background:#fff;color:var(--azul);border:none;border-radius:8px;padding:7px 14px;font-weight:700;font-size:13px;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:5px;}
+    .btn-pub:hover{opacity:.88;}
+    .nd{width:8px;height:8px;background:var(--vermelho);border-radius:50%;flex-shrink:0;}
+    .btn-menu{display:none;background:rgba(255,255,255,.18);border:none;border-radius:8px;padding:8px 12px;color:#fff;font-size:20px;cursor:pointer;line-height:1;}
+    /* DRAWER */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:299;display:none;}
+    .overlay.on{display:block;}
+    .drawer{position:fixed;top:0;right:-290px;width:280px;height:100vh;background:var(--branco);z-index:300;box-shadow:-4px 0 20px rgba(0,0,0,.2);transition:right .28s;overflow-y:auto;display:flex;flex-direction:column;}
+    .drawer.open{right:0;}
+    .dr-head{background:var(--azul);padding:16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .dr-logo{color:#fff;font-size:17px;font-weight:800;}
+    .dr-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1;padding:2px 6px;}
+    .dr-user{padding:14px 16px;border-bottom:1px solid var(--borda);display:flex;align-items:center;gap:10px;}
+    .dr-av{width:42px;height:42px;border-radius:50%;background:var(--azul-light);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;flex-shrink:0;}
+    .dr-av img{width:100%;height:100%;object-fit:cover;}
+    .dr-nm{font-weight:700;font-size:14px;}
+    .dr-em{font-size:11px;color:var(--texto2);margin-top:1px;}
+    .dr-sec{padding:8px 16px 3px;font-size:10px;color:var(--texto2);text-transform:uppercase;font-weight:700;letter-spacing:.5px;}
+    .dr-item{display:flex;align-items:center;gap:10px;padding:11px 16px;color:var(--texto);text-decoration:none;font-size:14px;font-weight:500;border-bottom:1px solid var(--bg);transition:background .15s;}
+    .dr-item:hover{background:var(--bg);}
+    .dr-ic{font-size:18px;width:26px;text-align:center;flex-shrink:0;}
+    .dr-auth{padding:14px 16px;}
+    .dr-btn{display:block;border-radius:8px;padding:11px;text-align:center;font-weight:700;text-decoration:none;font-size:14px;margin-bottom:8px;}
+    .dr-btn-p{background:var(--azul);color:#fff;}
+    .dr-btn-s{background:var(--bg);color:var(--texto);}
+    /* CATEGORIAS */
+    .cats{background:var(--branco);border-bottom:1px solid var(--borda);overflow-x:auto;scrollbar-width:none;}
+    .cats::-webkit-scrollbar{display:none;}
+    .cats-in{max-width:1400px;margin:0 auto;display:flex;gap:4px;padding:7px 16px;}
+    .cat{white-space:nowrap;padding:6px 14px;border-radius:20px;border:1.5px solid var(--borda);background:var(--branco);color:var(--texto2);font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;transition:all .2s;}
+    .cat:hover,.cat.on{background:var(--azul-light);color:var(--azul);border-color:var(--azul);}
+    /* LAYOUT */
+    .layout{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:234px 1fr;gap:14px;padding:14px;}
+    /* SIDEBAR */
+    .sb{display:flex;flex-direction:column;gap:8px;}
+    .sb-c{background:var(--branco);border-radius:var(--r);padding:12px;box-shadow:var(--shadow);}
+    .sb-t{font-size:15px;font-weight:700;margin-bottom:8px;padding:0 4px;}
+    .sb-a{display:flex;align-items:center;gap:9px;padding:8px;border-radius:8px;text-decoration:none;color:var(--texto);font-size:14px;font-weight:500;transition:background .15s;}
+    .sb-a:hover{background:var(--bg);}
+    .sb-ic{width:32px;height:32px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+    /* FEED */
+    .feed{min-width:0;}
+    .banner{background:linear-gradient(135deg,#1877f2,#0d5ec9 60%,#1a3a8a);border-radius:var(--r);padding:22px 26px;color:#fff;margin-bottom:16px;overflow:hidden;position:relative;}
+    .banner::after{content:'🛍️';position:absolute;right:-10px;top:-10px;font-size:100px;opacity:.1;pointer-events:none;}
+    .banner-t{font-size:22px;font-weight:800;margin-bottom:4px;}
+    .banner-s{font-size:14px;opacity:.85;margin-bottom:14px;line-height:1.5;}
+    .btn-bann{background:#fff;color:var(--azul);border:none;border-radius:8px;padding:8px 18px;font-weight:700;font-size:14px;cursor:pointer;text-decoration:none;display:inline-block;}
+    .fh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+    .fh-t{font-size:19px;font-weight:700;}
+    select.ord{padding:6px 11px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;background:var(--branco);cursor:pointer;outline:none;}
+    /* GRID */
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:13px;}
+    /* CARD */
+    .pc{background:var(--branco);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;cursor:pointer;position:relative;transition:transform .2s,box-shadow .2s;}
+    .pc:hover{transform:translateY(-3px);box-shadow:0 8px 22px rgba(0,0,0,.13);}
+    .pc-img{position:relative;aspect-ratio:1;overflow:hidden;background:var(--bg);}
+    .pc-img img{width:100%;height:100%;object-fit:cover;transition:transform .3s;}
+    .pc:hover .pc-img img{transform:scale(1.05);}
+    .fc{position:absolute;bottom:7px;right:7px;background:rgba(0,0,0,.65);color:#fff;border-radius:10px;padding:2px 7px;font-size:11px;}
+    .bf{position:absolute;top:7px;right:7px;background:rgba(255,255,255,.92);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:transform .15s;line-height:1;}
+    .bf:hover{transform:scale(1.2);}
+    .pb{padding:10px;}
+    .pn{font-size:13px;font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .pp{font-size:16px;font-weight:800;color:var(--azul);margin-bottom:4px;}
+    .pl{font-size:11px;color:var(--texto2);margin-bottom:5px;}
+    .pst{display:flex;gap:1px;align-items:center;margin-bottom:7px;}
+    .pst span{font-size:12px;}
+    .pst small{font-size:11px;color:var(--texto2);margin-left:3px;}
+    .pa{display:flex;gap:7px;}
+    .bbuy{flex:1;background:var(--azul);color:#fff;border:none;border-radius:7px;padding:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;}
+    .bbuy:hover{background:var(--azul-dark);}
+    .bwa{background:var(--verde);color:#fff;border:none;border-radius:7px;padding:8px 10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .bwa svg{width:17px;height:17px;}
+    /* SKELETON */
+    .sk{background:linear-gradient(90deg,#f0f2f5 25%,#e4e6e9 50%,#f0f2f5 75%);background-size:200% 100%;animation:sk 1.5s infinite;border-radius:8px;}
+    @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    /* TOAST */
+    #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(90px);background:#323232;color:#fff;padding:11px 22px;border-radius:30px;font-size:14px;z-index:9999;transition:transform .3s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.3);max-width:90vw;text-align:center;}
+    #toast.on{transform:translateX(-50%) translateY(0);}
+    /* BOTTOM NAV */
+    .bn{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--branco);border-top:1px solid var(--borda);z-index:100;}
+    .bn-r{display:flex;justify-content:space-around;}
+    .bn-a{display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 10px;text-decoration:none;color:var(--texto2);font-size:10px;font-weight:600;min-width:50px;}
+    .bn-a.on{color:var(--azul);}
+    .bn-ic{font-size:21px;line-height:1;}
+    /* RESPONSIVO */
+    @media(max-width:900px){.layout{grid-template-columns:1fr;}.sb{display:none;}}
+    @media(max-width:600px){
+      .h-wrap{padding:0 12px;height:52px;}
+      .logo{font-size:18px;}.logo em{font-size:21px;}
+      .srch{max-width:none;}
+      .btn-h,.btn-pub{display:none;}
+      .btn-menu{display:flex;}
+      .layout{padding:10px 10px 70px;}
+      .grid{grid-template-columns:repeat(2,1fr);gap:9px;}
+      .pb{padding:8px;}
+      .pn{font-size:12px;}.pp{font-size:15px;}
+      .banner{padding:16px 18px;}.banner-t{font-size:17px;}.banner-s{font-size:12px;margin-bottom:10px;}
+      .bn{display:block;}
+    }
+    @media(max-width:360px){.grid{grid-template-columns:repeat(2,1fr);gap:7px;}}
+    footer{text-align:center;padding:18px;color:var(--texto2);font-size:13px;border-top:1px solid var(--borda);}
+    footer a{color:var(--azul);text-decoration:none;}
+  </style>
+</head>
+<body>
+<!-- HEADER -->
+<header>
+  <div class="h-wrap">
+    <a href="index.html" class="logo"><em>🛍️</em> Luvano</a>
+    <div class="srch">
+      <svg width="14" height="14" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" placeholder="Pesquisar produtos..." id="sInput"/>
+    </div>
+    <div class="h-btns">
+      <a href="favoritos.html" class="btn-h">❤️ Favoritos</a>
+      <a href="notificacoes.html" class="btn-h">🔔 <span class="nd" id="nd" style="display:none"></span></a>
+      <a href="publicar.html" class="btn-pub">+ Publicar</a>
+      <a href="perfil.html" class="btn-h" id="btnPerfil">👤 Perfil</a>
+    </div>
+    <button class="btn-menu" id="btnMenu">☰</button>
+  </div>
+</header>
+
+<!-- OVERLAY + DRAWER -->
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="dr-head">
+    <span class="dr-logo">🛍️ Luvano</span>
+    <button class="dr-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="dr-user" id="drUser">
+    <div class="dr-av" id="drAv">👤</div>
+    <div><div class="dr-nm" id="drNm">Bem-vindo!</div><div class="dr-em" id="drEm">Entre na sua conta</div></div>
+  </div>
+  <div class="dr-sec">Marketplace</div>
+  <a href="index.html" class="dr-item"><span class="dr-ic">🏠</span>Início</a>
+  <a href="favoritos.html" class="dr-item"><span class="dr-ic">❤️</span>Favoritos</a>
+  <a href="compras.html" class="dr-item"><span class="dr-ic">📦</span>Minhas Compras</a>
+  <a href="conversas.html" class="dr-item"><span class="dr-ic">💬</span>Mensagens</a>
+  <a href="notificacoes.html" class="dr-item"><span class="dr-ic">🔔</span>Notificações</a>
+  <div class="dr-sec">Vender</div>
+  <a href="publicar.html" class="dr-item"><span class="dr-ic">➕</span>Publicar Produto</a>
+  <a href="meus-produtos.html" class="dr-item"><span class="dr-ic">📋</span>Meus Produtos</a>
+  <a href="vendedor.html" class="dr-item"><span class="dr-ic">💼</span>Painel Vendedor</a>
+  <a href="carteira.html" class="dr-item"><span class="dr-ic">💳</span>Carteira</a>
+  <div class="dr-sec">Conta</div>
+  <a href="perfil.html" class="dr-item"><span class="dr-ic">👤</span>Perfil</a>
+  <a href="configuracoes.html" class="dr-item"><span class="dr-ic">⚙️</span>Configurações</a>
+  <a href="sobre.html" class="dr-item"><span class="dr-ic">ℹ️</span>Sobre</a>
+  <div class="dr-auth" id="drAuth">
+    <a href="login.html" class="dr-btn dr-btn-p">Entrar</a>
+    <a href="cadastro.html" class="dr-btn dr-btn-s">Criar Conta Grátis</a>
+  </div>
+</div>
+
+<!-- CATEGORIAS -->
+<div class="cats">
+  <div class="cats-in">
+    <button class="cat on" onclick="filtraCat('todos',this)">🏠 Todos</button>
+    <button class="cat" onclick="filtraCat('electrodomesticos',this)">📱 Electrónica</button>
+    <button class="cat" onclick="filtraCat('veiculos',this)">🚗 Veículos</button>
+    <button class="cat" onclick="filtraCat('imoveis',this)">🏡 Imóveis</button>
+    <button class="cat" onclick="filtraCat('moda',this)">👗 Moda</button>
+    <button class="cat" onclick="filtraCat('moveis',this)">🪑 Móveis</button>
+    <button class="cat" onclick="filtraCat('alimentacao',this)">🍎 Alimentação</button>
+    <button class="cat" onclick="filtraCat('servicos',this)">🔧 Serviços</button>
+    <button class="cat" onclick="filtraCat('animais',this)">🐾 Animais</button>
+    <button class="cat" onclick="filtraCat('desporto',this)">⚽ Desporto</button>
+    <button class="cat" onclick="filtraCat('outros',this)">📦 Outros</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="layout">
+  <aside class="sb">
+    <div class="sb-c">
+      <div class="sb-t">Marketplace</div>
+      <a href="index.html" class="sb-a"><span class="sb-ic">🏠</span>Início</a>
+      <a href="favoritos.html" class="sb-a"><span class="sb-ic">❤️</span>Favoritos</a>
+      <a href="compras.html" class="sb-a"><span class="sb-ic">📦</span>Minhas Compras</a>
+      <a href="conversas.html" class="sb-a"><span class="sb-ic">💬</span>Mensagens</a>
+      <a href="notificacoes.html" class="sb-a"><span class="sb-ic">🔔</span>Notificações</a>
+    </div>
+    <div class="sb-c">
+      <div class="sb-t">Vendedor</div>
+      <a href="publicar.html" class="sb-a"><span class="sb-ic">➕</span>Publicar Produto</a>
+      <a href="meus-produtos.html" class="sb-a"><span class="sb-ic">📋</span>Meus Produtos</a>
+      <a href="vendedor.html" class="sb-a"><span class="sb-ic">💼</span>Painel Vendedor</a>
+      <a href="carteira.html" class="sb-a"><span class="sb-ic">💳</span>Carteira</a>
+    </div>
+    <div class="sb-c">
+      <div class="sb-t">Conta</div>
+      <a href="perfil.html" class="sb-a"><span class="sb-ic">👤</span>Perfil</a>
+      <a href="configuracoes.html" class="sb-a"><span class="sb-ic">⚙️</span>Configurações</a>
+      <a href="sobre.html" class="sb-a"><span class="sb-ic">ℹ️</span>Sobre</a>
+    </div>
+  </aside>
+  <main class="feed">
+    <div class="banner">
+      <div>
+        <div class="banner-t">Bem-vindo ao Luvano! 🇲🇿</div>
+        <div class="banner-s">O maior marketplace de Moçambique.<br>Compre e venda com M-Pesa, E-Mola e mKesh.</div>
+        <a href="publicar.html" class="btn-bann">Comece a Vender</a>
+      </div>
+    </div>
+    <div class="fh">
+      <div class="fh-t" id="fTit">Produtos em Destaque</div>
+      <select class="ord" id="ord" onchange="loadProds(true)">
+        <option value="recentes">Mais Recentes</option>
+        <option value="preco_asc">Menor Preço</option>
+        <option value="preco_desc">Maior Preço</option>
+      </select>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div id="maisBtn" style="text-align:center;margin-top:18px;display:none">
+      <button onclick="loadMais()" style="background:var(--azul);color:#fff;border:none;border-radius:8px;padding:11px 30px;font-size:14px;font-weight:700;cursor:pointer;">Carregar Mais</button>
+    </div>
+  </main>
+</div>
+
+<footer><p>© 2024 Luvano Marketplace · <a href="sobre.html">Sobre</a> · Moçambique 🇲🇿</p></footer>
+
+<!-- BOTTOM NAV MOBILE -->
+<div class="bn">
+  <div class="bn-r">
+    <a href="index.html" class="bn-a on"><span class="bn-ic">🏠</span>Início</a>
+    <a href="favoritos.html" class="bn-a"><span class="bn-ic">❤️</span>Favoritos</a>
+    <a href="publicar.html" class="bn-a"><span class="bn-ic">➕</span>Publicar</a>
+    <a href="conversas.html" class="bn-a"><span class="bn-ic">💬</span>Chat</a>
+    <a href="perfil.html" class="bn-a"><span class="bn-ic">👤</span>Perfil</a>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script>
+const SB_URL='https://SEU_PROJETO.supabase.co';
+const SB_KEY='SUA_ANON_KEY_AQUI';
+const {createClient}=supabase;
+const sb=createClient(SB_URL,SB_KEY);
+let cat='todos',pag=0,PER=12,user=null,sTimer=null;
+
+document.addEventListener('DOMContentLoaded',async()=>{
+  const {data:{session}}=await sb.auth.getSession();
+  user=session?.user||null;
+  updateUI();
+  loadProds(true);
+  initSearch();
+  document.getElementById('btnMenu').onclick=()=>{
+    document.getElementById('drawer').classList.add('open');
+    document.getElementById('overlay').classList.add('on');
+    document.body.style.overflow='hidden';
+  };
+});
+
+async function updateUI(){
+  if(user){
+    const {data:p}=await sb.from('users').select('nome,avatar').eq('id',user.id).single().catch(()=>({data:null}));
+    const nm=p?.nome||user.email?.split('@')[0]||'Utilizador';
+    document.getElementById('btnPerfil').innerHTML=`👤 ${nm.split(' ')[0]}`;
+    document.getElementById('drNm').textContent=nm;
+    document.getElementById('drEm').textContent=user.email||'';
+    if(p?.avatar)document.getElementById('drAv').innerHTML=`<img src="${p.avatar}" alt=""/>`;
+    document.getElementById('drAuth').innerHTML=`
+      <a href="perfil.html" class="dr-btn" style="background:var(--azul-light);color:var(--azul);">Meu Perfil</a>
+      <button onclick="logout()" class="dr-btn" style="background:#ffebee;color:var(--vermelho);border:none;cursor:pointer;">🚪 Sair</button>`;
+    const {count}=await sb.from('notificacoes').select('*',{count:'exact',head:true}).eq('usuario_id',user.id).eq('visto',false).catch(()=>({count:0}));
+    if(count>0)document.getElementById('nd').style.display='inline-block';
+  }
+}
+
+async function logout(){await sb.auth.signOut();window.location.reload();}
+
+async function loadProds(reset=true){
+  if(reset){pag=0;showSkel(PER);}
+  let q=sb.from('produtos').select('*').eq('ativo',true);
+  if(cat!=='todos')q=q.eq('categoria',cat);
+  const o=document.getElementById('ord').value;
+  q=o==='preco_asc'?q.order('preco',{ascending:true}):o==='preco_desc'?q.order('preco',{ascending:false}):q.order('criado_em',{ascending:false});
+  q=q.range(pag*PER,(pag+1)*PER-1);
+  const {data,error}=await q;
+  if(error||!data){useDemo();return;}
+  const grid=document.getElementById('grid');
+  if(reset)grid.innerHTML='';
+  if(!data.length){
+    if(reset)grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--texto2)"><div style="font-size:52px">📦</div><p style="margin-top:12px;font-size:16px">Nenhum produto aqui</p><a href="publicar.html" style="color:var(--azul);font-weight:600;display:block;margin-top:10px">Seja o primeiro a publicar!</a></div>`;
+    document.getElementById('maisBtn').style.display='none';return;
+  }
+  data.forEach(p=>grid.appendChild(mkCard(p)));
+  document.getElementById('maisBtn').style.display=data.length===PER?'block':'none';
+}
+
+function loadMais(){pag++;loadProds(false);}
+
+const DEMO=[
+  {id:1,nome:'iPhone 14 Pro 256GB',preco:65000,local:'Maputo, Sommerschield',fotos:['https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&q=80'],avaliacao:4.8,total_fotos:3,vendedor_tel:'258841234567',categoria:'electrodomesticos'},
+  {id:2,nome:'Toyota Hilux 2020',preco:2800000,local:'Maputo, Matola',fotos:['https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=400&q=80'],avaliacao:4.5,total_fotos:8,vendedor_tel:'258842345678',categoria:'veiculos'},
+  {id:3,nome:'Sofá 3 Lugares Moderno',preco:18500,local:'Beira, Ponta Gêa',fotos:['https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80'],avaliacao:4.2,total_fotos:4,vendedor_tel:'258843456789',categoria:'moveis'},
+  {id:4,nome:'Vestido Capulana',preco:1200,local:'Nampula, Centro',fotos:['https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&q=80'],avaliacao:5.0,total_fotos:5,vendedor_tel:'258844567890',categoria:'moda'},
+  {id:5,nome:'Apartamento T3 Polana',preco:45000,local:'Maputo, Polana',fotos:['https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&q=80'],avaliacao:4.7,total_fotos:12,vendedor_tel:'258845678901',categoria:'imoveis'},
+  {id:6,nome:'Samsung Galaxy S23',preco:42000,local:'Maputo, Julius Nyerere',fotos:['https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400&q=80'],avaliacao:4.6,total_fotos:2,vendedor_tel:'258846789012',categoria:'electrodomesticos'},
+  {id:7,nome:'Mahindra XUV 2022',preco:1950000,local:'Tete, Centro',fotos:['https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=400&q=80'],avaliacao:4.3,total_fotos:6,vendedor_tel:'258847890123',categoria:'veiculos'},
+  {id:8,nome:'Geladeira Whirlpool 400L',preco:28000,local:'Maputo, Alto Maé',fotos:['https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=400&q=80'],avaliacao:4.4,total_fotos:3,vendedor_tel:'258848901234',categoria:'electrodomesticos'},
+  {id:9,nome:'Bicicleta Mountain Bike',preco:12500,local:'Beira, Munhava',fotos:['https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=400&q=80'],avaliacao:4.1,total_fotos:4,vendedor_tel:'258849012345',categoria:'desporto'},
+  {id:10,nome:'Camarões Frescos 1kg',preco:450,local:'Maputo, Mercado',fotos:['https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=400&q=80'],avaliacao:4.9,total_fotos:2,vendedor_tel:'258850123456',categoria:'alimentacao'},
+  {id:11,nome:'Cão Pastor Alemão',preco:8000,local:'Maputo, Zimpeto',fotos:['https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?w=400&q=80'],avaliacao:4.8,total_fotos:7,vendedor_tel:'258851234567',categoria:'animais'},
+  {id:12,nome:'Serviço de Canalização',preco:2500,local:'Maputo, Toda área',fotos:['https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=400&q=80'],avaliacao:4.7,total_fotos:1,vendedor_tel:'258852345678',categoria:'servicos'},
+];
+
+function useDemo(){
+  const grid=document.getElementById('grid');
+  grid.innerHTML='';
+  const f=cat==='todos'?DEMO:DEMO.filter(p=>p.categoria===cat);
+  if(!f.length){grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:50px;color:var(--texto2)"><div style="font-size:52px">📦</div><p style="margin-top:12px">Nenhum produto nesta categoria</p></div>`;return;}
+  f.forEach(p=>grid.appendChild(mkCard(p)));
+  document.getElementById('maisBtn').style.display='none';
+}
+
+function mkCard(p){
+  const fts=Array.isArray(p.fotos)?p.fotos:(typeof p.fotos==='string'?JSON.parse(p.fotos):[]);
+  const img=fts[0]||'https://via.placeholder.com/300?text=Luvano';
+  const av=parseFloat(p.avaliacao)||4.0;
+  const s='★'.repeat(Math.round(av))+'☆'.repeat(5-Math.round(av));
+  const tel=(p.vendedor_tel||'258841234567').replace(/\D/g,'');
+  const d=document.createElement('div');
+  d.className='pc';
+  d.innerHTML=`
+    <div class="pc-img" onclick="abrirProd(${p.id})">
+      <img src="${img}" alt="${p.nome}" loading="lazy" onerror="this.src='https://via.placeholder.com/300?text=Luvano'"/>
+      ${(p.total_fotos||fts.length)>1?`<span class="fc">📷 ${p.total_fotos||fts.length}</span>`:''}
+      <button class="bf" onclick="toggleFav(event,${p.id})" id="fav${p.id}" aria-label="Favoritar">🤍</button>
+    </div>
+    <div class="pb">
+      <div class="pn" title="${p.nome}">${p.nome}</div>
+      <div class="pp">MT ${Number(p.preco).toLocaleString('pt-MZ')}</div>
+      <div class="pl">📍 ${p.local||'Moçambique'}</div>
+      <div class="pst">${s.split('').map(c=>`<span style="color:${c==='★'?'#f4af00':'#ccc'}">${c}</span>`).join('')}<small>${av}</small></div>
+      <div class="pa">
+        <button class="bbuy" onclick="comprar(${p.id})">🛒 Comprar</button>
+        <button class="bwa" onclick="wa('${tel}','${p.nome.replace(/'/g,'').substring(0,40)}',${p.preco})" aria-label="WhatsApp">
+          <svg fill="white" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.558 4.118 1.534 5.848L.058 24l6.305-1.654A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.506-5.181-1.388l-.37-.22-3.745.982.999-3.652-.24-.38A9.938 9.938 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        </button>
+      </div>
+    </div>`;
+  return d;
+}
+
+function abrirProd(id){
+  if(!user){
+    showToast('Faça login para ver este produto');
+    setTimeout(()=>window.location.href=`login.html?next=${encodeURIComponent('produto.html?id='+id)}`,1500);
+    return;
+  }
+  window.location.href=`produto.html?id=${id}`;
+}
+
+function comprar(id){
+  if(!user){
+    showToast('Faça login para comprar');
+    setTimeout(()=>window.location.href=`login.html?next=${encodeURIComponent('pagamento.html?produto='+id)}`,1500);
+    return;
+  }
+  window.location.href=`pagamento.html?produto=${id}`;
+}
+
+function wa(tel,nome,preco){
+  const m=encodeURIComponent(`Olá! Tenho interesse no "${nome}" por MT ${Number(preco).toLocaleString('pt-MZ')} no Luvano. Disponível?`);
+  window.open(`https://wa.me/${tel}?text=${m}`,'_blank');
+}
+
+async function toggleFav(e,id){
+  e.stopPropagation();
+  if(!user){showToast('Faça login para favoritar');return;}
+  const btn=document.getElementById(`fav${id}`);
+  try{
+    const {data}=await sb.from('favoritos').select('id').eq('usuario_id',user.id).eq('produto_id',id).maybeSingle();
+    if(data){
+      await sb.from('favoritos').delete().eq('id',data.id);
+      btn.textContent='🤍';showToast('Removido dos favoritos');
+    }else{
+      await sb.from('favoritos').insert({usuario_id:user.id,produto_id:id});
+      btn.textContent='❤️';showToast('Adicionado aos favoritos! ❤️','sucesso');
+    }
+  }catch(err){showToast('Erro ao atualizar favoritos','erro');}
+}
+
+function filtraCat(c,el){
+  cat=c;
+  document.querySelectorAll('.cat').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  const nms={todos:'Todos',electrodomesticos:'Electrónica',veiculos:'Veículos',imoveis:'Imóveis',moda:'Moda',moveis:'Móveis',alimentacao:'Alimentação',servicos:'Serviços',animais:'Animais',desporto:'Desporto',outros:'Outros'};
+  document.getElementById('fTit').textContent=c==='todos'?'Produtos em Destaque':'Categoria: '+(nms[c]||c);
+  loadProds(true);
+}
+
+function initSearch(){
+  document.getElementById('sInput').addEventListener('input',e=>{
+    clearTimeout(sTimer);
+    const q=e.target.value.trim();
+    if(!q){loadProds(true);return;}
+    sTimer=setTimeout(async()=>{
+      showSkel(8);
+      const {data}=await sb.from('produtos').select('*').ilike('nome',`%${q}%`).eq('ativo',true).limit(20);
+      const grid=document.getElementById('grid');
+      grid.innerHTML='';
+      if(data&&data.length)data.forEach(p=>grid.appendChild(mkCard(p)));
+      else grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:50px;color:var(--texto2)"><div style="font-size:52px">🔍</div><p style="margin-top:12px">Sem resultados para "${q}"</p></div>`;
+      document.getElementById('maisBtn').style.display='none';
+    },400);
+  });
+}
+
+function showSkel(n){
+  document.getElementById('grid').innerHTML=Array(n).fill(`<div style="background:var(--branco);border-radius:12px;overflow:hidden"><div class="sk" style="aspect-ratio:1"></div><div style="padding:10px"><div class="sk" style="height:14px;width:70%;margin-bottom:7px"></div><div class="sk" style="height:20px;width:50%;margin-bottom:7px"></div><div class="sk" style="height:32px"></div></div></div>`).join('');
+}
+
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('on');
+  document.body.style.overflow='';
+}
+
+let toastT;
+function showToast(msg,t='info'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.style.background=t==='erro'?'#c62828':t==='sucesso'?'#2e7d32':'#323232';
+  el.classList.add('on');clearTimeout(toastT);
+  toastT=setTimeout(()=>el.classList.remove('on'),3200);
+}
+</script>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/service-worker.js");</script>
+</body>
+</html>
