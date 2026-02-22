@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Produto - Luvano</title>
+  <link rel="manifest" href="manifest.json"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{--azul:#1877f2;--azul-dark:#0d5ec9;--azul-light:#e7f0ff;--bg:#f0f2f5;--branco:#fff;--borda:#dde1e7;--texto:#1c1e21;--texto2:#65676b;--verde:#25D366;--vermelho:#e41e3f;--amarelo:#f4af00;--r:12px;--sh:0 2px 12px rgba(0,0,0,.1);}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);}
+    /* AUTH GATE */
+    #authGate{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:24px;text-align:center;}
+    #authGate .logo{font-size:60px;margin-bottom:8px;}
+    #authGate h2{font-size:22px;font-weight:800;}
+    #authGate p{color:var(--texto2);font-size:15px;max-width:320px;line-height:1.5;}
+    #authGate .btns{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;justify-content:center;}
+    #authGate .btn-e{background:var(--azul);color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:16px;font-weight:700;cursor:pointer;text-decoration:none;}
+    #authGate .btn-c{background:var(--branco);color:var(--azul);border:2px solid var(--azul);border-radius:10px;padding:12px 28px;font-size:16px;font-weight:700;cursor:pointer;text-decoration:none;}
+    /* HEADER */
+    header{background:var(--azul);padding:0 16px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(24,119,242,.4);}
+    .logo{color:#fff;font-size:20px;font-weight:800;text-decoration:none;display:flex;align-items:center;gap:6px;}
+    .btn-back{color:#fff;background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:7px 13px;cursor:pointer;font-size:14px;text-decoration:none;}
+    /* LOADING */
+    #loading{display:flex;align-items:center;justify-content:center;flex-direction:column;padding:80px 24px;color:var(--texto2);}
+    /* LAYOUT */
+    .wrap{max-width:1060px;margin:0 auto;padding:16px;display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start;}
+    @media(max-width:760px){.wrap{grid-template-columns:1fr;padding:12px;}}
+    /* GALERIA */
+    .gal{background:var(--branco);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;}
+    .fp{position:relative;aspect-ratio:1;overflow:hidden;background:var(--bg);max-height:420px;}
+    @media(max-width:760px){.fp{max-height:280px;}}
+    .fp img{width:100%;height:100%;object-fit:cover;cursor:zoom-in;}
+    .fn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:38px;height:38px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;}
+    .fn.p{left:8px;}.fn.n{right:8px;}
+    .fc-ind{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;}
+    .thumbs{display:flex;gap:7px;padding:10px;overflow-x:auto;scrollbar-width:thin;}
+    .thumb{width:66px;height:66px;flex-shrink:0;border-radius:8px;overflow:hidden;cursor:pointer;border:2.5px solid transparent;transition:border-color .2s;}
+    .thumb.on{border-color:var(--azul);}
+    .thumb img{width:100%;height:100%;object-fit:cover;}
+    /* DETALHES */
+    .det{background:var(--branco);border-radius:var(--r);box-shadow:var(--sh);padding:18px;margin-top:14px;}
+    .pn{font-size:22px;font-weight:800;margin-bottom:7px;line-height:1.3;}
+    .pp{font-size:32px;font-weight:900;color:var(--azul);margin-bottom:8px;}
+    .badges{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;}
+    .badge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;}
+    .b-v{background:#e8f5e9;color:#2e7d32;}.b-c{background:var(--azul-light);color:var(--azul);}.b-n{background:#fff3e0;color:#ef6c00;}
+    .ploc{color:var(--texto2);font-size:14px;margin-bottom:10px;}
+    .str-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+    .stars{display:flex;gap:1px;}
+    .stars span{font-size:18px;}
+    .str-info{font-size:13px;color:var(--texto2);}
+    .divid{border:none;border-top:1px solid var(--borda);margin:14px 0;}
+    .desc{font-size:15px;color:var(--texto);line-height:1.65;}
+    .det-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+    .di{background:var(--bg);border-radius:8px;padding:10px 12px;}
+    .di-l{font-size:11px;color:var(--texto2);font-weight:600;text-transform:uppercase;margin-bottom:2px;}
+    .di-v{font-size:14px;font-weight:700;}
+    /* PAINEL LATERAL */
+    .side{display:flex;flex-direction:column;gap:14px;}
+    .card{background:var(--branco);border-radius:var(--r);box-shadow:var(--sh);padding:18px;}
+    .btn-buy{width:100%;background:var(--azul);color:#fff;border:none;border-radius:10px;padding:14px;font-size:17px;font-weight:700;cursor:pointer;margin-bottom:9px;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s;}
+    .btn-buy:hover{background:var(--azul-dark);}
+    .btn-wa{width:100%;background:var(--verde);color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s;}
+    .btn-wa:hover{background:#1da951;}
+    .btn-fav{width:100%;background:var(--branco);color:var(--texto);border:2px solid var(--borda);border-radius:10px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;margin-top:9px;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s;}
+    .btn-fav:hover{border-color:var(--vermelho);color:var(--vermelho);}
+    .btn-fav.on{border-color:var(--vermelho);color:var(--vermelho);background:#fff0f3;}
+    .vend-info{display:flex;align-items:center;gap:10px;}
+    .vend-av{width:46px;height:46px;border-radius:50%;background:var(--azul-light);display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden;flex-shrink:0;}
+    .vend-av img{width:100%;height:100%;object-fit:cover;}
+    .vend-nm{font-weight:700;font-size:15px;}
+    .vend-dt{font-size:12px;color:var(--texto2);margin-top:2px;}
+    .vend-btns{display:flex;gap:8px;margin-top:12px;}
+    .vb{flex:1;padding:8px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;text-align:center;}
+    .vb-out{background:var(--bg);color:var(--texto);}
+    .vb-msg{background:var(--azul-light);color:var(--azul);}
+    /* AVALIAÇÕES */
+    .av-item{padding:11px 0;border-bottom:1px solid var(--borda);}
+    .av-item:last-child{border-bottom:none;}
+    .av-head{display:flex;align-items:center;gap:7px;margin-bottom:4px;flex-wrap:wrap;}
+    .av-nm{font-weight:600;font-size:14px;}
+    .av-st{color:var(--amarelo);font-size:13px;}
+    .av-dt{font-size:11px;color:var(--texto2);margin-left:auto;}
+    .av-txt{font-size:14px;color:var(--texto2);line-height:1.5;}
+    /* LIGHTBOX */
+    .lb{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:999;display:none;align-items:center;justify-content:center;}
+    .lb.on{display:flex;}
+    .lb img{max-width:95vw;max-height:92vh;object-fit:contain;}
+    .lb-x{position:absolute;top:14px;right:18px;color:#fff;font-size:34px;cursor:pointer;background:none;border:none;line-height:1;}
+    .lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:50%;width:48px;height:48px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .lb-p{left:12px;}.lb-n{right:12px;}
+    /* MODAL AVALIAÇÃO */
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:998;display:none;align-items:center;justify-content:center;padding:16px;}
+    .modal-bg.on{display:flex;}
+    .modal{background:var(--branco);border-radius:14px;padding:26px;width:100%;max-width:380px;text-align:center;}
+    .modal h3{font-size:20px;margin-bottom:8px;}
+    .modal p{color:var(--texto2);font-size:14px;margin-bottom:16px;}
+    .est-modal{display:flex;justify-content:center;gap:8px;margin:14px 0;}
+    .em{font-size:36px;cursor:pointer;transition:transform .15s;}
+    .em:hover{transform:scale(1.2);}
+    .modal textarea{width:100%;padding:11px;border:2px solid var(--borda);border-radius:8px;font-size:14px;outline:none;resize:vertical;min-height:76px;margin-bottom:14px;font-family:inherit;}
+    .modal textarea:focus{border-color:var(--azul);}
+    .modal-btns{display:flex;gap:9px;}
+    .modal-btns button{flex:1;padding:12px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:none;}
+    .mb-c{background:var(--bg);color:var(--texto);}
+    .mb-ok{background:var(--azul);color:#fff;}
+    /* TOAST */
+    #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(90px);background:#323232;color:#fff;padding:11px 22px;border-radius:30px;font-size:14px;z-index:9999;transition:transform .3s;max-width:90vw;text-align:center;}
+    #toast.on{transform:translateX(-50%) translateY(0);}
+    /* BOTTOM ACTIONS MOBILE */
+    .mobile-actions{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--branco);border-top:1px solid var(--borda);padding:10px 16px calc(10px + env(safe-area-inset-bottom));gap:8px;z-index:100;}
+    @media(max-width:760px){.mobile-actions{display:flex;}.wrap{padding-bottom:80px;}}
+    .ma-buy{flex:1;background:var(--azul);color:#fff;border:none;border-radius:9px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;}
+    .ma-wa{background:var(--verde);color:#fff;border:none;border-radius:9px;padding:12px 16px;cursor:pointer;display:flex;align-items:center;}
+    .ma-fav{background:var(--bg);border:none;border-radius:9px;padding:12px;font-size:20px;cursor:pointer;}
+  </style>
+</head>
+<body>
+
+<!-- GATE DE AUTENTICAÇÃO (aparece se não estiver logado) -->
+<div id="authGate" style="display:none">
+  <div class="logo">🔒</div>
+  <h2>Faça Login para Ver Este Produto</h2>
+  <p>Crie uma conta gratuita ou entre na sua conta para ver detalhes, preços e comprar produtos no Luvano.</p>
+  <div class="btns">
+    <a href="" id="gateLogin" class="btn-e">Entrar</a>
+    <a href="cadastro.html" class="btn-c">Criar Conta</a>
+  </div>
+</div>
+
+<header>
+  <a href="index.html" class="logo">🛍️ Luvano</a>
+  <a href="javascript:history.back()" class="btn-back">← Voltar</a>
+</header>
+
+<div id="loading"><div style="font-size:40px">⏳</div><p style="margin-top:12px">A carregar produto...</p></div>
+<div id="mainWrap" style="display:none">
+  <!-- conteúdo inserido via JS -->
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lb" id="lb" onclick="closeLb(event)">
+  <button class="lb-x" onclick="closeLb()">✕</button>
+  <button class="lb-nav lb-p" onclick="navLb(-1)">‹</button>
+  <img id="lbImg" src="" alt=""/>
+  <button class="lb-nav lb-n" onclick="navLb(1)">›</button>
+</div>
+
+<!-- MODAL AVALIAÇÃO -->
+<div class="modal-bg" id="modalAv">
+  <div class="modal">
+    <h3>⭐ Avaliar Produto</h3>
+    <p>A sua avaliação ajuda outros compradores</p>
+    <div class="est-modal" id="estMod">
+      <span class="em" onclick="selEst(1)">☆</span><span class="em" onclick="selEst(2)">☆</span>
+      <span class="em" onclick="selEst(3)">☆</span><span class="em" onclick="selEst(4)">☆</span>
+      <span class="em" onclick="selEst(5)">☆</span>
+    </div>
+    <textarea id="txtAv" placeholder="Escreva a sua opinião (opcional)..."></textarea>
+    <div class="modal-btns">
+      <button class="mb-c" onclick="document.getElementById('modalAv').classList.remove('on')">Cancelar</button>
+      <button class="mb-ok" onclick="enviarAv()">Enviar ⭐</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM ACTIONS MOBILE -->
+<div class="mobile-actions" id="mobileActs" style="display:none">
+  <button class="ma-fav" id="mFav" onclick="toggleFav()">🤍</button>
+  <button class="ma-buy" onclick="comprar()">🛒 Comprar Agora</button>
+  <button class="ma-wa" id="mWa"><svg width="22" height="22" fill="white" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.558 4.118 1.534 5.848L.058 24l6.305-1.654A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.506-5.181-1.388l-.37-.22-3.745.982.999-3.652-.24-.38A9.938 9.938 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg></button>
+</div>
+
+<div id="toast"></div>
+<script>
+const SB_URL='https://SEU_PROJETO.supabase.co';
+const SB_KEY='SUA_ANON_KEY_AQUI';
+const {createClient}=supabase;
+const sb=createClient(SB_URL,SB_KEY);
+const params=new URLSearchParams(window.location.search);
+const pid=params.get('id');
+let prod=null,fotos=[],fi=0,avSel=0,user=null,faved=false;
+
+document.addEventListener('DOMContentLoaded',async()=>{
+  // VERIFICAR AUTENTICAÇÃO PRIMEIRO
+  const {data:{session}}=await sb.auth.getSession();
+  user=session?.user||null;
+
+  if(!user){
+    // Mostrar gate de autenticação em vez do produto
+    document.getElementById('loading').style.display='none';
+    const gate=document.getElementById('authGate');
+    gate.style.display='flex';
+    const loginUrl=`login.html?next=${encodeURIComponent('produto.html?id='+(pid||''))}`;
+    document.getElementById('gateLogin').href=loginUrl;
+    return;
+  }
+
+  // Está logado: carregar produto
+  await loadProd();
+});
+
+async function loadProd(){
+  let data=null;
+  if(pid){
+    const {data:d}=await sb.from('produtos').select('*,users(nome,avatar,criado_em,telefone)').eq('id',pid).maybeSingle();
+    data=d;
+  }
+  if(!data){
+    data={id:1,nome:'iPhone 14 Pro 256GB Preto',preco:65000,local:'Maputo, Sommerschield',
+      descricao:'iPhone 14 Pro em excelente estado. Apenas 6 meses de uso, sem arranhões. Inclui caixa original, carregador, e 2 capas. Bateria com 91% de saúde. Desbloqueado para todos os operadores.\n\nMotivo da venda: mudança para outro modelo.\nNegociação possível para pagamento rápido.',
+      fotos:JSON.stringify(['https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800&q=80','https://images.unsplash.com/photo-1591337676887-a217a6970a8a?w=800&q=80','https://images.unsplash.com/photo-1574944985070-8f3ebc6b79d2?w=800&q=80']),
+      condicao:'seminovo',tipo_preco:'negociavel',categoria:'electrodomesticos',avaliacao:4.8,total_avaliacoes:24,
+      vendedor_tel:'258841234567',vendedor_id:null,
+      users:{nome:'João António Silva',criado_em:'2023-01-15',avatar:null,telefone:'258841234567'}};
+  }
+  prod=data;
+  fotos=typeof prod.fotos==='string'?JSON.parse(prod.fotos):(prod.fotos||[]);
+  if(!fotos.length)fotos=['https://via.placeholder.com/800?text=Luvano'];
+
+  // verificar favorito
+  const {data:fv}=await sb.from('favoritos').select('id').eq('usuario_id',user.id).eq('produto_id',prod.id).maybeSingle().catch(()=>({data:null}));
+  faved=!!fv;
+
+  document.getElementById('loading').style.display='none';
+  render();
+}
+
+function render(){
+  document.title=`${prod.nome} - Luvano`;
+  const conds={novo:'✨ Novo',seminovo:'👍 Semi-Novo',usado:'📦 Usado'};
+  const vend=prod.users||{};
+  const av=parseFloat(prod.avaliacao)||0;
+  const tel=(prod.vendedor_tel||vend.telefone||'258841234567').replace(/\D/g,'');
+  const wamsg=encodeURIComponent(`Olá! Tenho interesse no produto "${prod.nome}" por MT ${Number(prod.preco).toLocaleString('pt-MZ')} no Luvano. Ainda está disponível?`);
+  const stars=Array.from({length:5}).map((_,i)=>`<span style="color:${i<Math.round(av)?'#f4af00':'#ccc'}">${i<Math.round(av)?'★':'☆'}</span>`).join('');
+
+  document.getElementById('mainWrap').style.display='block';
+  document.getElementById('mainWrap').innerHTML=`
+  <div class="wrap">
+    <!-- ESQUERDA -->
+    <div>
+      <div class="gal">
+        <div class="fp">
+          <img id="fpImg" src="${fotos[0]}" alt="${prod.nome}" onclick="openLb(0)"/>
+          ${fotos.length>1?`<button class="fn p" onclick="navFoto(-1)">‹</button><button class="fn n" onclick="navFoto(1)">›</button>`:''}
+          ${fotos.length>1?`<div class="fc-ind" id="fcInd">1/${fotos.length}</div>`:''}
+        </div>
+        ${fotos.length>1?`<div class="thumbs">${fotos.map((f,i)=>`<div class="thumb ${i===0?'on':''}" id="th${i}" onclick="irFoto(${i})"><img src="${f}" loading="lazy" alt=""/></div>`).join('')}</div>`:''}
+      </div>
+
+      <div class="det">
+        <div class="pn">${prod.nome}</div>
+        <div class="pp">MT ${Number(prod.preco).toLocaleString('pt-MZ')}</div>
+        <div class="badges">
+          ${prod.condicao?`<span class="badge b-v">${conds[prod.condicao]||prod.condicao}</span>`:''}
+          <span class="badge b-c">📦 ${prod.categoria||'Geral'}</span>
+          ${prod.tipo_preco==='negociavel'?'<span class="badge b-n">💬 Negociável</span>':''}
+        </div>
+        <div class="ploc">📍 ${prod.local||'Moçambique'}</div>
+        <div class="str-row">
+          <div class="stars">${stars}</div>
+          <div class="str-info"><strong>${av}</strong>/5 · ${prod.total_avaliacoes||0} avaliações</div>
+          <button onclick="openAval()" style="background:none;border:none;color:var(--azul);cursor:pointer;font-size:13px;font-weight:600;">Avaliar ⭐</button>
+        </div>
+        <hr class="divid"/>
+        <div class="desc">${(prod.descricao||'Sem descrição disponível.').replace(/\n/g,'<br>')}</div>
+        <div class="det-grid">
+          <div class="di"><div class="di-l">Condição</div><div class="di-v">${conds[prod.condicao]||'N/D'}</div></div>
+          <div class="di"><div class="di-l">Tipo de Preço</div><div class="di-v">${prod.tipo_preco==='negociavel'?'Negociável':'Fixo'}</div></div>
+          <div class="di"><div class="di-l">Localização</div><div class="di-v">${prod.local||'N/D'}</div></div>
+          <div class="di"><div class="di-l">Publicado</div><div class="di-v">${prod.criado_em?new Date(prod.criado_em).toLocaleDateString('pt-MZ'):'Recentemente'}</div></div>
+        </div>
+      </div>
+
+      <div class="det" style="margin-top:14px">
+        <div style="font-size:17px;font-weight:700;margin-bottom:12px">⭐ Avaliações</div>
+        <div id="avList"><p style="text-align:center;padding:20px;color:var(--texto2)">A carregar avaliações...</p></div>
+      </div>
+    </div>
+
+    <!-- DIREITA (só desktop) -->
+    <div class="side">
+      <div class="card">
+        <div style="font-size:12px;color:var(--texto2);margin-bottom:12px">✅ Produto verificado pelo Luvano</div>
+        <button class="btn-buy" onclick="comprar()">🛒 Comprar Agora</button>
+        <button class="btn-wa" onclick="abrirWA('${tel}','${prod.nome.replace(/'/g,'').substring(0,40)}',${prod.preco})">
+          <svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.558 4.118 1.534 5.848L.058 24l6.305-1.654A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.506-5.181-1.388l-.37-.22-3.745.982.999-3.652-.24-.38A9.938 9.938 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          Contactar via WhatsApp
+        </button>
+        <button class="btn-fav ${faved?'on':''}" id="btnFav" onclick="toggleFav()">
+          ${faved?'❤️ Favoritado':'🤍 Adicionar aos Favoritos'}
+        </button>
+      </div>
+      <div class="card">
+        <div style="font-size:15px;font-weight:700;margin-bottom:12px">👤 Vendedor</div>
+        <div class="vend-info">
+          <div class="vend-av">${vend.avatar?`<img src="${vend.avatar}" alt="${vend.nome}"/>`:'👤'}</div>
+          <div>
+            <div class="vend-nm">${vend.nome||'Vendedor Luvano'}</div>
+            <div class="vend-dt">Membro desde ${vend.criado_em?new Date(vend.criado_em).getFullYear():'2024'}</div>
+          </div>
+        </div>
+        <div class="vend-btns">
+          <a href="vendedor.html?id=${prod.vendedor_id||''}" class="vb vb-out">Ver Perfil</a>
+          <button class="vb vb-msg" onclick="abrirChat()">💬 Chat</button>
+        </div>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,#e8f5e9,#f0fff4)">
+        <div style="font-size:14px;font-weight:700;color:#2e7d32;margin-bottom:8px">🔒 Compra Segura</div>
+        <div style="font-size:13px;color:#388e3c;line-height:1.7">
+          ✅ Pagamento via M-Pesa, E-Mola ou mKesh<br>
+          ✅ Referência única por transação<br>
+          ✅ Suporte ao comprador garantido<br>
+          ✅ Histórico de compras disponível
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  // Configurar bottom nav mobile
+  const maDiv=document.getElementById('mobileActs');
+  maDiv.style.display='flex';
+  document.getElementById('mFav').textContent=faved?'❤️':'🤍';
+  document.getElementById('mWa').onclick=()=>abrirWA(tel,prod.nome.replace(/'/g,'').substring(0,40),prod.preco);
+
+  loadAvals();
+}
+
+/* NAVEGAÇÃO GALERIA */
+function irFoto(idx){
+  fi=idx;
+  document.getElementById('fpImg').src=fotos[idx];
+  const ind=document.getElementById('fcInd');
+  if(ind)ind.textContent=`${idx+1}/${fotos.length}`;
+  document.querySelectorAll('.thumb').forEach((t,i)=>t.classList.toggle('on',i===idx));
+}
+function navFoto(d){irFoto((fi+d+fotos.length)%fotos.length);}
+
+/* LIGHTBOX */
+function openLb(idx){fi=idx;document.getElementById('lbImg').src=fotos[idx];document.getElementById('lb').classList.add('on');}
+function closeLb(e){if(!e||e.target===document.getElementById('lb')||e.currentTarget.classList.contains('lb-x'))document.getElementById('lb').classList.remove('on');}
+function navLb(d){fi=(fi+d+fotos.length)%fotos.length;document.getElementById('lbImg').src=fotos[fi];}
+
+/* COMPRAR */
+function comprar(){window.location.href=`pagamento.html?produto=${prod.id}`;}
+
+/* WHATSAPP */
+function abrirWA(tel,nome,preco){
+  window.open(`https://wa.me/${tel}?text=${encodeURIComponent(`Olá! Vi o produto "${nome}" por MT ${Number(preco).toLocaleString('pt-MZ')} no Luvano. Disponível?`)}`,'_blank');
+}
+
+/* FAVORITAR */
+async function toggleFav(){
+  const btnD=document.getElementById('btnFav');
+  const btnM=document.getElementById('mFav');
+  try{
+    if(faved){
+      await sb.from('favoritos').delete().eq('usuario_id',user.id).eq('produto_id',prod.id);
+      faved=false;
+      if(btnD){btnD.innerHTML='🤍 Adicionar aos Favoritos';btnD.classList.remove('on');}
+      if(btnM)btnM.textContent='🤍';
+      showToast('Removido dos favoritos');
+    }else{
+      await sb.from('favoritos').insert({usuario_id:user.id,produto_id:prod.id});
+      faved=true;
+      if(btnD){btnD.innerHTML='❤️ Favoritado';btnD.classList.add('on');}
+      if(btnM)btnM.textContent='❤️';
+      showToast('Adicionado aos favoritos! ❤️','sucesso');
+    }
+  }catch{showToast('Erro ao atualizar favorito','erro');}
+}
+
+/* CHAT */
+function abrirChat(){window.location.href=`chat.html?vendedor=${prod.vendedor_id}&produto=${prod.id}`;}
+
+/* AVALIAÇÃO */
+function openAval(){document.getElementById('modalAv').classList.add('on');}
+
+function selEst(v){
+  avSel=v;
+  document.querySelectorAll('.em').forEach((e,i)=>{e.textContent=i<v?'★':'☆';e.style.color=i<v?'#f4af00':'#ccc';});
+}
+
+async function enviarAv(){
+  if(!avSel){showToast('Selecione pelo menos 1 estrela','erro');return;}
+  const txt=document.getElementById('txtAv').value.trim();
+  const {error}=await sb.from('avaliacoes').insert({produto_id:prod.id,usuario_id:user.id,nota:avSel,texto:txt,criado_em:new Date().toISOString()});
+  if(error){
+    if(error.code==='23505')showToast('Já avaliou este produto','erro');
+    else showToast('Erro ao enviar avaliação','erro');
+    return;
+  }
+  const {data:avs}=await sb.from('avaliacoes').select('nota').eq('produto_id',prod.id);
+  if(avs&&avs.length){
+    const media=avs.reduce((s,a)=>s+a.nota,0)/avs.length;
+    await sb.from('produtos').update({avaliacao:parseFloat(media.toFixed(1)),total_avaliacoes:avs.length}).eq('id',prod.id);
+  }
+  document.getElementById('modalAv').classList.remove('on');
+  showToast('Avaliação enviada! Obrigado ⭐','sucesso');
+  setTimeout(()=>loadAvals(),1200);
+}
+
+async function loadAvals(){
+  const {data}=await sb.from('avaliacoes').select('*,users(nome)').eq('produto_id',prod.id).order('criado_em',{ascending:false}).limit(6);
+  const el=document.getElementById('avList');
+  if(!el)return;
+  if(!data||!data.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--texto2)"><p>Ainda não há avaliações.</p><button onclick="openAval()" style="color:var(--azul);background:none;border:none;cursor:pointer;font-weight:600;margin-top:8px">Seja o primeiro a avaliar ⭐</button></div>';return;}
+  el.innerHTML=data.map(a=>`
+    <div class="av-item">
+      <div class="av-head">
+        <span class="av-nm">${a.users?.nome||'Utilizador'}</span>
+        <span class="av-st">${'★'.repeat(a.nota)}${'☆'.repeat(5-a.nota)}</span>
+        <span class="av-dt">${new Date(a.criado_em).toLocaleDateString('pt-MZ')}</span>
+      </div>
+      ${a.texto?`<div class="av-txt">${a.texto}</div>`:''}
+    </div>`).join('');
+}
+
+let toastT;
+function showToast(msg,t='info'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.style.background=t==='erro'?'#c62828':t==='sucesso'?'#2e7d32':'#323232';
+  el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),3200);
+}
+</script>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/service-worker.js");</script>
+</body>
+</html>
