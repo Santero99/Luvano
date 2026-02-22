@@ -3,8 +3,8 @@
 // Substitua com suas credenciais reais do Supabase
 // ============================================================
 
-const SUPABASE_URL = 'https://SEU_PROJETO.supabase.co';
-const SUPABASE_ANON_KEY = 'SUA_ANON_KEY_AQUI';
+const SUPABASE_URL = 'https://hzpbsvddutdpckfoohuu.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_S4z9oNt3unnEc-3d958zQw_1cyZPWH1';
 
 // Número do WhatsApp padrão da plataforma (suporte)
 const LUVANO_WHATSAPP = '258841234567';
